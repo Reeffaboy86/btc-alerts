@@ -4,7 +4,7 @@ from flask import Flask
 app = Flask(__name__)
 
 # Config
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSi0bMHcbjwY9JXBN"
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSiObMHcbjwY9JXBN"
 TARGET_ENTRY = 1.0  # Set low for testing
 ALERT_COOLDOWN = 900 
 
