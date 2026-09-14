@@ -8,7 +8,7 @@ app = Flask(__name__)
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1549075247108456458/K6p2w-tPBxR_Cdpdn9kqKfA_3KAM4HxX_sr2I2EgAPv5bxW-pXgJzSQWm57WTEPcIxM8"
 
 # Channel 2: Whale / Big Move Impulse Alerts (Paste your SECOND Webhook URL here)
-DISCORD_WHALE_WEBHOOK_URL = "https://discord.com/api/webhooks/1549037655445086288/UHg-GQbslmYflnMND5cpn7SojgXS2vdpoveuM5HirKzD2bxUD-8pdvzFDVLPcDTz1AlJ"
+DISCORD_WHALE_WEBHOOK_URL = "https://discord.com/api/webhooks/1549076176662831246/U24bHAk-GSWqy0aX5sBq3RV_GFhTeLql2Kb4JUx-tv--gU1s4UMn8IcKq9T3GsGB47Tv"
 
 ALERT_COOLDOWN = 900  # 15-minute alert cooldown per target level
 
