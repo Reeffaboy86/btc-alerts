@@ -1,3 +1,4 @@
+
 import os, time, threading, requests
 from flask import Flask
 
@@ -5,54 +6,69 @@ app = Flask(__name__)
 
 # Config
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSiObMHcbjwY9JXBN"
-TARGET_ENTRY = 79950.0
 ALERT_COOLDOWN = 900 
 
-last_alert_time = 0
+# Multi-Coin Target Configuration
+TARGETS = [
+    # Short Targets (Alerts when price pushes UP into resistance)
+    {"coin": "BTC-USD", "label": "BTC Resistance Short 1", "target": 79685.0, "type": "SHORT", "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC Major Short",        "target": 80910.0, "type": "SHORT", "last_alert": 0},
+    
+    # Long Targets (Alerts when price drops DOWN into support)
+    {"coin": "BTC-USD", "label": "BTC Range Low Long",     "target": 76260.0, "type": "LONG",  "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC Daily POC Long",     "target": 72690.0, "type": "LONG",  "last_alert": 0}
+]
 
-def send_discord_alert(price):
-    global last_alert_time
+def send_discord_alert(coin_label, price, target):
     payload = {
-        "username": "BTC Execution Bot",
+        "username": "Crypto Execution Bot",
         "embeds": [{
-            "title": f"🚨 TARGET HIT: {price} USDT",
-            "description": "**Price wicking into target short zone.**",
+            "title": f"🚨 {coin_label} TARGET HIT: ${price:,.2f}",
+            "description": f"**Price crossed target zone of ${target:,.2f}**",
             "color": 15158332,
             "fields": [
-                {"name": "Action Required", "value": "Check 1H Candle Close", "inline": False}
+                {"name": "Action Required", "value": "Check 1H Candle Close & Order Flow", "inline": False}
             ]
         }]
     }
     try:
         r = requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
-        print(f"Discord Post Status: {r.status_code}")
+        print(f"Discord Post Status for {coin_label}: {r.status_code}")
     except Exception as e:
-        print(f"Discord Post Error: {e}")
-        
-    last_alert_time = time.time()
+        print(f"Discord Post Error ({coin_label}): {e}")
 
-def monitor_price():
-    print(">>> PRICE MONITOR STARTED SUCCESSFULLY <<<")
-    # Custom User-Agent header to prevent API blocking
+def monitor_prices():
+    print(">>> MULTI-COIN MONITOR STARTED SUCCESSFULLY <<<")
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     
     while True:
-        try:
-            r = requests.get("https://api.coinbase.com/v2/prices/BTC-USD/spot", headers=headers, timeout=5).json()
-            current_price = float(r["data"]["amount"])
-            print(f"Current BTC Price: {current_price}")
-            
-            if current_price >= TARGET_ENTRY and (time.time() - last_alert_time) > ALERT_COOLDOWN:
-                print("Target reached! Sending Discord notification...")
-                send_discord_alert(current_price)
+        for t in TARGETS:
+            try:
+                url = f"https://api.coinbase.com/v2/prices/{t['coin']}/spot"
+                r = requests.get(url, headers=headers, timeout=5).json()
+                current_price = float(r["data"]["amount"])
+                print(f"{t['label']} Price: ${current_price:,.2f} | Target: ${t['target']:,.2f}")
                 
-        except Exception as e:
-            print(f"Error checking price: {e}")
-            
-        time.sleep(5)
+                # Logic check based on position type
+                is_hit = False
+                if t["type"] == "SHORT" and current_price >= t["target"]:
+                    is_hit = True
+                elif t["type"] == "LONG" and current_price <= t["target"]:
+                    is_hit = True
 
-# Force background thread execution on Gunicorn worker startup
-t = threading.Thread(target=monitor_price, daemon=True)
+                if is_hit and (time.time() - t["last_alert"]) > ALERT_COOLDOWN:
+                    print(f"Target reached for {t['label']}! Sending Discord notification...")
+                    send_discord_alert(t['label'], current_price, t['target'])
+                    t["last_alert"] = time.time()
+                    
+            except Exception as e:
+                print(f"Error checking {t['label']} price: {e}")
+                
+            time.sleep(2)
+            
+        time.sleep(10)
+
+t = threading.Thread(target=monitor_prices, daemon=True)
 t.start()
 
 @app.route('/health')
