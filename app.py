@@ -3,16 +3,14 @@ from flask import Flask
 
 app = Flask(__name__)
 
-# --- CONFIGURATION ---
-# Channel 1: TPO Level & TP Alerts
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSiObMHcbjwY9JXBN"
-
-# Channel 2: Pointing to the same URL for temporary testing purposes
-DISCORD_WHALE_WEBHOOK_URL = "https://discord.com/api/webhooks/1549037655445086288/UHg-GQbslmYflnMND5cpn7SojgXS2vdpoveuM5HirKzD2bxUD-8pdvzFDVLPcDTz1AlJ"
+# --- CONFIGURATION (SECURED VIA ENVIRONMENT VARIABLES) ---
+# Pulls URLs securely from the environment. Falls back to None if not configured.
+DISCORD_WEBHOOK_URL = os.environ.get("https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSiObMHcbjwY9JXBN")
+DISCORD_WHALE_WEBHOOK_URL = os.environ.get("https://discord.com/api/webhooks/1549037655445086288/UHg-GQbslmYflnMND5cpn7SojgXS2vdpoveuM5HirKzD2bxUD-8pdvzFDVLPcDTz1AlJ")
 
 ALERT_COOLDOWN = 900  # 15-minute alert cooldown per target level
 
-# Multi-Coin Target Configuration
+# Multi-Coin Target Configuration (Preserved exact target limits)
 TARGETS = [
     # ==========================================
     # --- BTC SETUPS ---
@@ -64,6 +62,10 @@ previous_prices = {}
 
 # --- DISCORD NOTIFICATION LOGIC ---
 def send_discord_alert(coin_label, price, target):
+    if not DISCORD_WEBHOOK_URL:
+        print("Skipping Level Alert: DISCORD_WEBHOOK_URL environment variable is missing.")
+        return
+        
     payload = {
         "username": "Crypto Level Bot",
         "embeds": [{
@@ -75,11 +77,15 @@ def send_discord_alert(coin_label, price, target):
     }
     try:
         response = requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
-        print(f"Level Alert Status Code: {response.status_code}, Response: {response.text}")
+        print(f"Level Alert Status Code: {response.status_code}")
     except Exception as e:
         print(f"Level Alert Exception: {e}")
 
 def send_whale_move_alert(coin, move_pct, current_price):
+    if not DISCORD_WHALE_WEBHOOK_URL:
+        print("Skipping Whale Alert: DISCORD_WHALE_WEBHOOK_URL environment variable is missing.")
+        return
+        
     is_up = move_pct > 0
     title = f"🟢 🐋 WHALE BUY IMPULSE: {coin} +{move_pct:.2f}%" if is_up else f"🔴 🐋 WHALE SELL IMPULSE: {coin} {move_pct:.2f}%"
     color = 3066993 if is_up else 15158332
@@ -95,7 +101,7 @@ def send_whale_move_alert(coin, move_pct, current_price):
     }
     try:
         response = requests.post(DISCORD_WHALE_WEBHOOK_URL, json=payload, timeout=5)
-        print(f"Whale Alert Status Code: {response.status_code}, Response: {response.text}")
+        print(f"Whale Alert Status Code: {response.status_code}")
     except Exception as e:
         print(f"Whale Alert Exception: {e}")
 
@@ -105,7 +111,7 @@ def monitor_prices():
     
     # 🧪 FORCED BOOT TEST FOR BOTH CHANNELS (BTC & ETH)
     time.sleep(3)
-    print("Triggering test alerts for BTC and ETH...")
+    print("Triggering secure test alerts for BTC and ETH...")
     
     # BTC Test Pings
     send_discord_alert("🧪 TEST ALERT - BTC LEVEL BOT", 78500.0, 78000.0)
