@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 # --- CONFIGURATION ---
 # Channel 1: TPO Level & TP Alerts
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSi0bMHcbjwY9JXBN"
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1549075247108456458/K6p2w-tPBxR_Cdpdn9kqKfA_3KAM4HxX_sr2I2EgAPv5bxW-pXgJzSQWm57WTEPcIxM8"
 
 # Channel 2: Whale / Big Move Impulse Alerts (Paste your SECOND Webhook URL here)
 DISCORD_WHALE_WEBHOOK_URL = "https://discord.com/api/webhooks/1549037655445086288/UHg-GQbslmYflnMND5cpn7SojgXS2vdpoveuM5HirKzD2bxUD-8pdvzFDVLPcDTz1AlJ"
