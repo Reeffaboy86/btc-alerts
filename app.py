@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 # --- CONFIGURATION ---
 # Channel 1: TPO Level & TP Alerts
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSi0bMHcbjwY9JXBN"
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSiObMHcbjwY9JXBN"
 
 # Channel 2: Whale / Big Move Impulse Alerts (Paste your SECOND Webhook URL here)
 DISCORD_WHALE_WEBHOOK_URL = "https://discord.com/api/webhooks/1549037655445086288/UHg-GQbslmYflnMND5cpn7SojgXS2vdpoveuM5HirKzD2bxUD-8pdvzFDVLPcDTz1AlJ"
@@ -14,12 +14,6 @@ ALERT_COOLDOWN = 900  # 15-minute alert cooldown per target level
 
 # Multi-Coin Target Configuration
 TARGETS = [
-    # ==========================================
-    # 🧪 TEST TARGETS (FIRE IMMEDIATELY ON BOOT)
-    # ==========================================
-    {"coin": "BTC-USD", "label": "🧪 TEST ALERT - BTC LEVEL BOT WORKING", "target": 1.0, "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "🧪 TEST ALERT - ETH LEVEL BOT WORKING", "target": 1.0, "type": "SHORT", "last_alert": 0},
-
     # ==========================================
     # --- BTC SETUPS ---
     # ==========================================
@@ -63,8 +57,6 @@ TARGETS = [
     {"coin": "ETH-USD", "label": "ETH LONG ENTRY 2 (Untested POC)", "target": 2435.0,  "type": "LONG",  "last_alert": 0},
     {"coin": "ETH-USD", "label": "ETH LONG ENTRY 3 (Macro POC)",    "target": 2260.0,  "type": "LONG",  "last_alert": 0},
     {"coin": "ETH-USD", "label": "ETH LONG TP1 (Local TVAH)",       "target": 2530.0,  "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH LONG TP2 (Range High)",       "target": 2720.0,  "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH LONG TP3 (HTF Node $3k)",     "target": 2980.0,  "type": "SHORT", "last_alert": 0},
     {"coin": "ETH-USD", "label": "ETH LONG RUNNER (Macro High)",    "target": 3380.0,  "type": "SHORT", "last_alert": 0}
 ]
 
@@ -82,9 +74,10 @@ def send_discord_alert(coin_label, price, target):
         }]
     }
     try:
-        requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
+        response = requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
+        print(f"Level Alert Status Code: {response.status_code}, Response: {response.text}")
     except Exception as e:
-        print(f"Level Alert Error: {e}")
+        print(f"Level Alert Exception: {e}")
 
 def send_whale_move_alert(coin, move_pct, current_price):
     is_up = move_pct > 0
@@ -101,36 +94,35 @@ def send_whale_move_alert(coin, move_pct, current_price):
         }]
     }
     try:
-        requests.post(DISCORD_WHALE_WEBHOOK_URL, json=payload, timeout=5)
+        response = requests.post(DISCORD_WHALE_WEBHOOK_URL, json=payload, timeout=5)
+        print(f"Whale Alert Status Code: {response.status_code}, Response: {response.text}")
     except Exception as e:
-        print(f"Whale Alert Error: {e}")
+        print(f"Whale Alert Exception: {e}")
 
 # --- MONITORING THREAD ---
 def monitor_prices():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     
-    # 🧪 TEST ALERTS FOR WHALE CHANNEL (Fires on Boot)
+    # 🧪 FORCED BOOT TEST FOR BOTH CHANNELS
     time.sleep(3)
+    print("Triggering test alerts...")
+    send_discord_alert("🧪 TEST ALERT - LEVEL BOT WORKING", 78500.0, 78000.0)
     send_whale_move_alert("BTC-USD (TEST)", 0.85, 78500.0)
-    send_whale_move_alert("ETH-USD (TEST)", 0.92, 2510.0)
 
-    # Unique list of assets to query from Coinbase
     tracked_coins = list(set([t["coin"] for t in TARGETS]))
 
     while True:
         current_prices = {}
 
-        # 1. Fetch spot price ONCE per asset to prevent rate-limiting
         for coin in tracked_coins:
             try:
-                url = f"https://api.coinbase.com/v2/prices/{coin}/spot"
+                url = f"https://coinbase.com{coin}/spot"
                 r = requests.get(url, headers=headers, timeout=5).json()
                 current_prices[coin] = float(r["data"]["amount"])
             except Exception as e:
                 print(f"Error fetching {coin}: {e}")
             time.sleep(1)
 
-        # 2. Check TPO Target Levels
         for t in TARGETS:
             coin = t["coin"]
             if coin not in current_prices:
@@ -148,7 +140,6 @@ def monitor_prices():
                 send_discord_alert(t['label'], current_price, t['target'])
                 t["last_alert"] = time.time()
 
-        # 3. Check Whale Impulses (>= 0.75% move between cycles)
         for coin, current_price in current_prices.items():
             if coin in previous_prices:
                 old_price = previous_prices[coin]
@@ -169,4 +160,5 @@ def health():
     return "OK", 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
