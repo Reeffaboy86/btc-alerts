@@ -109,42 +109,56 @@ def send_whale_move_alert(coin, move_pct, current_price):
 def monitor_prices():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     
-    # 🧪 SIMULATE A TEST WHALE ALERT ON FIRST RUN
+    # 🧪 TEST ALERTS FOR WHALE CHANNEL (Fires on Boot)
     time.sleep(3)
     send_whale_move_alert("BTC-USD (TEST)", 0.85, 78500.0)
+    send_whale_move_alert("ETH-USD (TEST)", 0.92, 2510.0)
+
+    # Unique list of assets to query from Coinbase
+    tracked_coins = list(set([t["coin"] for t in TARGETS]))
 
     while True:
-        for t in TARGETS:
+        current_prices = {}
+
+        # 1. Fetch spot price ONCE per asset to prevent rate-limiting
+        for coin in tracked_coins:
             try:
-                url = f"https://api.coinbase.com/v2/prices/{t['coin']}/spot"
+                url = f"https://api.coinbase.com/v2/prices/{coin}/spot"
                 r = requests.get(url, headers=headers, timeout=5).json()
-                current_price = float(r["data"]["amount"])
-                coin = t["coin"]
-
-                # 1. Check TPO Target Levels
-                is_hit = False
-                if t["type"] == "SHORT" and current_price >= t["target"]:
-                    is_hit = True
-                elif t["type"] == "LONG" and current_price <= t["target"]:
-                    is_hit = True
-
-                if is_hit and (time.time() - t["last_alert"]) > ALERT_COOLDOWN:
-                    send_discord_alert(t['label'], current_price, t['target'])
-                    t["last_alert"] = time.time()
-
-                # 2. Check Sudden Impulse (>= 0.75% move)
-                if coin in previous_prices:
-                    old_price = previous_prices[coin]
-                    pct_change = ((current_price - old_price) / old_price) * 100
-                    
-                    if abs(pct_change) >= 0.75:
-                        send_whale_move_alert(coin, pct_change, current_price)
-
-                previous_prices[coin] = current_price
-
+                current_prices[coin] = float(r["data"]["amount"])
             except Exception as e:
-                print(f"Error checking {t['label']}: {e}")
-            time.sleep(2)
+                print(f"Error fetching {coin}: {e}")
+            time.sleep(1)
+
+        # 2. Check TPO Target Levels
+        for t in TARGETS:
+            coin = t["coin"]
+            if coin not in current_prices:
+                continue
+
+            current_price = current_prices[coin]
+            is_hit = False
+
+            if t["type"] == "SHORT" and current_price >= t["target"]:
+                is_hit = True
+            elif t["type"] == "LONG" and current_price <= t["target"]:
+                is_hit = True
+
+            if is_hit and (time.time() - t["last_alert"]) > ALERT_COOLDOWN:
+                send_discord_alert(t['label'], current_price, t['target'])
+                t["last_alert"] = time.time()
+
+        # 3. Check Whale Impulses (>= 0.75% move between cycles)
+        for coin, current_price in current_prices.items():
+            if coin in previous_prices:
+                old_price = previous_prices[coin]
+                pct_change = ((current_price - old_price) / old_price) * 100
+                
+                if abs(pct_change) >= 0.75:
+                    send_whale_move_alert(coin, pct_change, current_price)
+
+            previous_prices[coin] = current_price
+
         time.sleep(10)
 
 # Start background thread
