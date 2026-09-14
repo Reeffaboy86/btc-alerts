@@ -3,14 +3,16 @@ from flask import Flask
 
 app = Flask(__name__)
 
-# --- CONFIGURATION (SECURED VIA ENVIRONMENT VARIABLES) ---
-# Pulls URLs securely from the environment. Falls back to None if not configured.
-DISCORD_WEBHOOK_URL = os.environ.get("https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSiObMHcbjwY9JXBN")
-DISCORD_WHALE_WEBHOOK_URL = os.environ.get("https://discord.com/api/webhooks/1549037655445086288/UHg-GQbslmYflnMND5cpn7SojgXS2vdpoveuM5HirKzD2bxUD-8pdvzFDVLPcDTz1AlJ")
+# --- CONFIGURATION ---
+# Channel 1: TPO Level & TP Alerts
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSi0bMHcbjwY9JXBN"
+
+# Channel 2: Whale / Big Move Impulse Alerts (Paste your SECOND Webhook URL here)
+DISCORD_WHALE_WEBHOOK_URL = "https://discord.com/api/webhooks/1549037655445086288/UHg-GQbslmYflnMND5cpn7SojgXS2vdpoveuM5HirKzD2bxUD-8pdvzFDVLPcDTz1AlJ"
 
 ALERT_COOLDOWN = 900  # 15-minute alert cooldown per target level
 
-# Multi-Coin Target Configuration (Preserved exact target limits)
+# Multi-Coin Target Configuration
 TARGETS = [
     # ==========================================
     # --- BTC SETUPS ---
@@ -62,10 +64,6 @@ previous_prices = {}
 
 # --- DISCORD NOTIFICATION LOGIC ---
 def send_discord_alert(coin_label, price, target):
-    if not DISCORD_WEBHOOK_URL:
-        print("Skipping Level Alert: DISCORD_WEBHOOK_URL environment variable is missing.")
-        return
-        
     payload = {
         "username": "Crypto Level Bot",
         "embeds": [{
@@ -77,15 +75,11 @@ def send_discord_alert(coin_label, price, target):
     }
     try:
         response = requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
-        print(f"Level Alert Status Code: {response.status_code}")
+        print(f"Level Alert Status Code: {response.status_code}, Response: {response.text}")
     except Exception as e:
         print(f"Level Alert Exception: {e}")
 
 def send_whale_move_alert(coin, move_pct, current_price):
-    if not DISCORD_WHALE_WEBHOOK_URL:
-        print("Skipping Whale Alert: DISCORD_WHALE_WEBHOOK_URL environment variable is missing.")
-        return
-        
     is_up = move_pct > 0
     title = f"🟢 🐋 WHALE BUY IMPULSE: {coin} +{move_pct:.2f}%" if is_up else f"🔴 🐋 WHALE SELL IMPULSE: {coin} {move_pct:.2f}%"
     color = 3066993 if is_up else 15158332
@@ -101,7 +95,7 @@ def send_whale_move_alert(coin, move_pct, current_price):
     }
     try:
         response = requests.post(DISCORD_WHALE_WEBHOOK_URL, json=payload, timeout=5)
-        print(f"Whale Alert Status Code: {response.status_code}")
+        print(f"Whale Alert Status Code: {response.status_code}, Response: {response.text}")
     except Exception as e:
         print(f"Whale Alert Exception: {e}")
 
@@ -109,17 +103,11 @@ def send_whale_move_alert(coin, move_pct, current_price):
 def monitor_prices():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     
-    # 🧪 FORCED BOOT TEST FOR BOTH CHANNELS (BTC & ETH)
+    # 🧪 FORCED BOOT TEST FOR BOTH CHANNELS
     time.sleep(3)
-    print("Triggering secure test alerts for BTC and ETH...")
-    
-    # BTC Test Pings
-    send_discord_alert("🧪 TEST ALERT - BTC LEVEL BOT", 78500.0, 78000.0)
+    print("Triggering test alerts...")
+    send_discord_alert("🧪 TEST ALERT - LEVEL BOT WORKING", 78500.0, 78000.0)
     send_whale_move_alert("BTC-USD (TEST)", 0.85, 78500.0)
-    
-    # ETH Test Pings
-    send_discord_alert("🧪 TEST ALERT - ETH LEVEL BOT", 2550.0, 2500.0)
-    send_whale_move_alert("ETH-USD (TEST)", 1.20, 2550.0)
 
     tracked_coins = list(set([t["coin"] for t in TARGETS]))
 
@@ -128,8 +116,7 @@ def monitor_prices():
 
         for coin in tracked_coins:
             try:
-                # FIXED: Uses correct Coinbase API base directory path and lowercase tickers (.lower())
-                url = f"https://coinbase.com{coin.lower()}/spot"
+                url = f"https://api.coinbase.com/v2/prices/{coin}/spot"
                 r = requests.get(url, headers=headers, timeout=5).json()
                 current_prices[coin] = float(r["data"]["amount"])
             except Exception as e:
@@ -173,7 +160,4 @@ def health():
     return "OK", 200
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
-
-
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
