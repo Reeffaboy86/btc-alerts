@@ -8,21 +8,9 @@ app = Flask(__name__)
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSiObMHcbjwY9JXBN"
 ALERT_COOLDOWN = 900 
 
-# Multi-Coin Target Configuration (BTC + ETH TPO Levels)
 TARGETS = [
-    # --- BTC TARGETS ---
-    {"coin": "BTC-USD", "label": "BTC TVAH Short",        "target": 78190.0, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC TPOC Short",        "target": 79685.0, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC Range High Short",  "target": 80910.0, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC TVAL Long",         "target": 75540.0, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC Daily TPOC Long",   "target": 72690.0, "type": "LONG",  "last_alert": 0},
-
-    # --- ETH TARGETS ---
-    {"coin": "ETH-USD", "label": "ETH Local TVAH Short",  "target": 2533.0,  "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH Range High Short",  "target": 2650.0,  "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH Local TVAL Long",   "target": 2500.0,  "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH Untested TPOC Long","target": 2435.0,  "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH Macro POC Long",    "target": 2260.0,  "type": "LONG",  "last_alert": 0}
+    {"coin": "BTC-USD", "label": "BTC TEST PING", "target": 1.0, "type": "SHORT", "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH TEST PING", "target": 1.0, "type": "SHORT", "last_alert": 0}
 ]
 def send_discord_alert(coin_label, price, target):
     payload = {
