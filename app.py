@@ -126,9 +126,10 @@ def monitor_prices():
     while True:
         current_prices = {}
 
-                for coin in tracked_coins:
+        for coin in tracked_coins:
             try:
-                url = f"https://coinbase.com{coin}/spot"
+                # FIXED: Uses correct Coinbase API base directory path and lowercase tickers (.lower())
+                url = f"https://coinbase.com{coin.lower()}/spot"
                 r = requests.get(url, headers=headers, timeout=5).json()
                 current_prices[coin] = float(r["data"]["amount"])
             except Exception as e:
@@ -174,4 +175,5 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
 
