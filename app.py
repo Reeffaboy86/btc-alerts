@@ -33,10 +33,12 @@ def send_discord_alert(price):
 
 def monitor_price():
     print(">>> PRICE MONITOR STARTED SUCCESSFULLY <<<")
+    # Custom User-Agent header to prevent API blocking
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    
     while True:
         try:
-            # Using Coinbase API to avoid US IP block issues
-            r = requests.get("https://api.coinbase.com/v2/prices/BTC-USD/spot", timeout=5).json()
+            r = requests.get("https://api.coinbase.com/v2/prices/BTC-USD/spot", headers=headers, timeout=5).json()
             current_price = float(r["data"]["amount"])
             print(f"Current BTC Price: {current_price}")
             
