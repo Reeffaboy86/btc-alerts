@@ -126,7 +126,7 @@ def monitor_prices():
     while True:
         current_prices = {}
 
-        for coin in tracked_coins:
+                for coin in tracked_coins:
             try:
                 url = f"https://coinbase.com{coin}/spot"
                 r = requests.get(url, headers=headers, timeout=5).json()
