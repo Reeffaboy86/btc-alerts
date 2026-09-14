@@ -25,20 +25,14 @@ TARGETS = [
     {"coin": "BTC-USD", "label": "BTC HTF SHORT ENTRY (Weekly POC)","target": 87768.0, "type": "SHORT", "last_alert": 0},
     {"coin": "BTC-USD", "label": "BTC HTF SHORT ENTRY (Monthly POC)","target": 89691.0, "type": "SHORT", "last_alert": 0},
     {"coin": "BTC-USD", "label": "BTC HTF SHORT ENTRY (Untest POC)","target": 95487.0, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC SHORT TP1 (TVAH Level)",      "target": 78190.0, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC SHORT TP2 (TVAL Support)",    "target": 75540.0, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC SHORT TP3 (Daily TPOC)",      "target": 72690.0, "type": "LONG",  "last_alert": 0},
+    
 
     # 2. BTC LONG SETUPS & TAKE PROFITS
     {"coin": "BTC-USD", "label": "BTC LONG ENTRY 1 (TVAL Support)", "target": 75540.0, "type": "LONG",  "last_alert": 0},
     {"coin": "BTC-USD", "label": "BTC LONG ENTRY 2 (Daily TPOC)",   "target": 72690.0, "type": "LONG",  "last_alert": 0},
     {"coin": "BTC-USD", "label": "BTC MACRO LONG ENTRY 1 (POC Cluster)","target": 63506.0, "type": "LONG", "last_alert": 0},
     {"coin": "BTC-USD", "label": "BTC MACRO LONG ENTRY 2 (Untest Wkly)","target": 59965.0, "type": "LONG", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC LONG TP1 (TVAH Resistance)",  "target": 78190.0, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC LONG TP2 (TPOC Level)",       "target": 79685.0, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC LONG TP3 (Range High)",       "target": 80910.0, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC LONG RUNNER (Weekly POC)",    "target": 87768.0, "type": "SHORT", "last_alert": 0},
-
+    
     # ==========================================
     # --- ETH SETUPS ---
     # ==========================================
@@ -48,19 +42,12 @@ TARGETS = [
     {"coin": "ETH-USD", "label": "ETH SHORT ENTRY 2 (Range High)",  "target": 2720.0,  "type": "SHORT", "last_alert": 0},
     {"coin": "ETH-USD", "label": "ETH HTF SHORT ENTRY (Psych $3k)", "target": 2980.0,  "type": "SHORT", "last_alert": 0},
     {"coin": "ETH-USD", "label": "ETH HTF SHORT ENTRY (Macro High)","target": 3380.0,  "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH SHORT TP1 (TVAL Support)",    "target": 2506.0,  "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH SHORT TP2 (Untested POC)",    "target": 2435.0,  "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH SHORT TP3 (Macro Support)",   "target": 2260.0,  "type": "LONG",  "last_alert": 0},
-
+    
     # 2. ETH LONG SETUPS & TAKE PROFITS
     {"coin": "ETH-USD", "label": "ETH LONG ENTRY 1 (TVAL Level)",   "target": 2506.0,  "type": "LONG",  "last_alert": 0},
     {"coin": "ETH-USD", "label": "ETH LONG ENTRY 2 (Untested POC)", "target": 2435.0,  "type": "LONG",  "last_alert": 0},
     {"coin": "ETH-USD", "label": "ETH LONG ENTRY 3 (Macro POC)",    "target": 2260.0,  "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH LONG TP1 (Local TVAH)",       "target": 2530.0,  "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH LONG TP2 (Range High)",       "target": 2720.0,  "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH LONG TP3 (HTF Node $3k)",     "target": 2980.0,  "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH LONG RUNNER (Macro High)",    "target": 3380.0,  "type": "SHORT", "last_alert": 0}
-]
+   
 
 previous_prices = {}
 
