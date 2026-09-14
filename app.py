@@ -7,7 +7,7 @@ app = Flask(__name__)
 # Channel 1: TPO Level & TP Alerts
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSiObMHcbjwY9JXBN"
 
-# Channel 2: Whale / Big Move Impulse Alerts (Paste your SECOND Webhook URL here)
+# Channel 2: Pointing to the same URL for temporary testing purposes
 DISCORD_WHALE_WEBHOOK_URL = "https://discord.com/api/webhooks/1549037655445086288/UHg-GQbslmYflnMND5cpn7SojgXS2vdpoveuM5HirKzD2bxUD-8pdvzFDVLPcDTz1AlJ"
 
 ALERT_COOLDOWN = 900  # 15-minute alert cooldown per target level
@@ -103,11 +103,17 @@ def send_whale_move_alert(coin, move_pct, current_price):
 def monitor_prices():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     
-    # 🧪 FORCED BOOT TEST FOR BOTH CHANNELS
+    # 🧪 FORCED BOOT TEST FOR BOTH CHANNELS (BTC & ETH)
     time.sleep(3)
-    print("Triggering test alerts...")
-    send_discord_alert("🧪 TEST ALERT - LEVEL BOT WORKING", 78500.0, 78000.0)
+    print("Triggering test alerts for BTC and ETH...")
+    
+    # BTC Test Pings
+    send_discord_alert("🧪 TEST ALERT - BTC LEVEL BOT", 78500.0, 78000.0)
     send_whale_move_alert("BTC-USD (TEST)", 0.85, 78500.0)
+    
+    # ETH Test Pings
+    send_discord_alert("🧪 TEST ALERT - ETH LEVEL BOT", 2550.0, 2500.0)
+    send_whale_move_alert("ETH-USD (TEST)", 1.20, 2550.0)
 
     tracked_coins = list(set([t["coin"] for t in TARGETS]))
 
@@ -162,3 +168,4 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
