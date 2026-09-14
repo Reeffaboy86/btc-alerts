@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 # Config
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSiObMHcbjwY9JXBN"
-TARGET_ENTRY = 1.0  # Set low for testing
+TARGET_ENTRY = 79950.0
 ALERT_COOLDOWN = 900 
 
 last_alert_time = 0
