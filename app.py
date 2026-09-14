@@ -35,8 +35,9 @@ def monitor_price():
     print(">>> PRICE MONITOR STARTED SUCCESSFULLY <<<")
     while True:
         try:
-            r = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT", timeout=5).json()
-            current_price = float(r["price"])
+            # Using Coinbase API to avoid US IP block issues
+            r = requests.get("https://api.coinbase.com/v2/prices/BTC-USD/spot", timeout=5).json()
+            current_price = float(r["data"]["amount"])
             print(f"Current BTC Price: {current_price}")
             
             if current_price >= TARGET_ENTRY and (time.time() - last_alert_time) > ALERT_COOLDOWN:
@@ -58,4 +59,3 @@ def health():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
-
