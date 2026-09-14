@@ -4,9 +4,9 @@ from flask import Flask
 app = Flask(__name__)
 
 # Config
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSiObMHcbjwY9JXBN"
-TARGET_ENTRY = 1.0
-ALERT_COOLDOWN = 900  # 2 minute pause between pings
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1548980198039363586/SbspEcALq9ZqK0LeGqd_D4ZBP2iHOusQEG4BAFWHSk345HC1EMfaSi0bMHcbjwY9JXBN"
+TARGET_ENTRY = 1.0  # Set low for testing
+ALERT_COOLDOWN = 900 
 
 last_alert_time = 0
 
@@ -16,34 +16,41 @@ def send_discord_alert(price):
         "username": "BTC Execution Bot",
         "embeds": [{
             "title": f"🚨 TARGET HIT: {price} USDT",
-            "description": "**Price wicking into 79,950 USDT short zone.**",
+            "description": "**Price wicking into target short zone.**",
             "color": 15158332,
             "fields": [
-                {"name": "Action Required", "value": "Check 1H Candle Close & CVD Divergence", "inline": False},
-                {"name": "Stop Loss", "value": "~80,950 USDT", "inline": True},
-                {"name": "TP1 / TP2", "value": "76,040 / 69,810 USDT", "inline": True}
-            ],
-            "footer": {"text": "Spot/Futures Order Flow System"}
+                {"name": "Action Required", "value": "Check 1H Candle Close", "inline": False}
+            ]
         }]
     }
-    requests.post(DISCORD_WEBHOOK_URL, json=payload)
+    try:
+        r = requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
+        print(f"Discord Post Status: {r.status_code}")
+    except Exception as e:
+        print(f"Discord Post Error: {e}")
+        
     last_alert_time = time.time()
 
 def monitor_price():
+    print(">>> PRICE MONITOR STARTED SUCCESSFULLY <<<")
     while True:
         try:
             r = requests.get("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT", timeout=5).json()
             current_price = float(r["price"])
+            print(f"Current BTC Price: {current_price}")
             
             if current_price >= TARGET_ENTRY and (time.time() - last_alert_time) > ALERT_COOLDOWN:
+                print("Target reached! Sending Discord notification...")
                 send_discord_alert(current_price)
                 
         except Exception as e:
             print(f"Error checking price: {e}")
             
-        time.sleep(3)
+        time.sleep(5)
 
-threading.Thread(target=monitor_price, daemon=True).start()
+# Force background thread execution on Gunicorn worker startup
+t = threading.Thread(target=monitor_price, daemon=True)
+t.start()
 
 @app.route('/health')
 def health():
@@ -51,3 +58,4 @@ def health():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+
