@@ -87,8 +87,9 @@ def send_discord_alert(coin_label, price, target):
     }
     try:
         requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=15)
+        print(f"[ALERT SENT] Level trigger: {coin_label} at ${price:,.2f}", flush=True)
     except Exception as e:
-        print(f"Level Alert Error: {e}")
+        print(f"[ERROR] Level Alert Error: {e}", flush=True)
 
 def send_whale_move_alert(coin, move_pct, current_price):
     is_up = move_pct > 0
@@ -106,8 +107,9 @@ def send_whale_move_alert(coin, move_pct, current_price):
     }
     try:
         requests.post(DISCORD_WHALE_WEBHOOK_URL, json=payload, timeout=15)
+        print(f"[WHALE ALERT SENT] {coin} move {move_pct:.2f}% at ${current_price:,.2f}", flush=True)
     except Exception as e:
-        print(f"Whale Alert Error: {e}")
+        print(f"[ERROR] Whale Alert Error: {e}", flush=True)
 
 def check_whale_impulses(current_prices):
     now = time.time()
@@ -140,6 +142,8 @@ def monitor_prices():
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     tracked_coins = list(set([t["coin"] for t in TARGETS]))
 
+    print("[SYSTEM] Starting price monitoring background thread...", flush=True)
+
     while True:
         current_prices = {}
 
@@ -150,7 +154,7 @@ def monitor_prices():
                 r = requests.get(url, headers=headers, timeout=15).json()
                 current_prices[coin] = float(r["data"]["amount"])
             except Exception as e:
-                print(f"Error fetching {coin}: {e}")
+                print(f"[ERROR] Fetching {coin}: {e}", flush=True)
             time.sleep(1)
 
         # 2. Check Directional Target Levels
@@ -174,6 +178,11 @@ def monitor_prices():
 
         # 3. Check 5-minute Rolling Whale Impulses
         check_whale_impulses(current_prices)
+
+        # Output continuous terminal heartbeat with unbuffered logging
+        btc_p = current_prices.get("BTC-USD", 0)
+        eth_p = current_prices.get("ETH-USD", 0)
+        print(f"--- Loop Tick: BTC ${btc_p:,.2f} | ETH ${eth_p:,.2f} ---", flush=True)
 
         time.sleep(10)
 
