@@ -17,31 +17,56 @@ TARGETS = [
     # ==========================================
     # --- BTC ENTRY SETUPS ---
     # ==========================================
-    {"coin": "BTC-USD", "label": "BTC SHORT ENTRY 1 (TPOC)",        "target": 79685.0, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC SHORT ENTRY 2 (Range High)",  "target": 80910.0, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC SHORT ENTRY 3 (Swing Peak)",  "target": 81498.0, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC HTF SHORT ENTRY (Weekly POC)","target": 87768.0, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC HTF SHORT ENTRY (Monthly POC)","target": 89691.0, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC HTF SHORT ENTRY (Untest POC)","target": 95487.0, "type": "SHORT", "last_alert": 0},
-
-    {"coin": "BTC-USD", "label": "BTC LONG ENTRY 1 (TVAL Support)", "target": 75540.0, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC LONG ENTRY 2 (Daily TPOC)",   "target": 72690.0, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC MACRO LONG ENTRY 1 (POC Cluster)","target": 63506.0, "type": "LONG", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC MACRO LONG ENTRY 2 (Untest Wkly)","target": 59965.0, "type": "LONG", "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 1",  "target": 96207.8, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 2",  "target": 94854.2, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 3",  "target": 89699.1, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 4",  "target": 87281.7, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 5",  "target": 80685.1, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 6",  "target": 79951.0, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 7",  "target": 79343.9, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 8",  "target": 76185.3, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 9",  "target": 75521.6, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 10", "target": 74513.8, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 11", "target": 72816.5, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 12", "target": 71477.6, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 13", "target": 69799.8, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 14", "target": 68096.3, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 15", "target": 65084.5, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 16", "target": 63381.1, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 17", "target": 60620.1, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 18", "target": 59753.9, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 19", "target": 48466.9, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 20", "target": 46987.3, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 21", "target": 43512.0, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 22", "target": 42577.1, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 23", "target": 30135.7, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 24", "target": 29415.0, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 25", "target": 28868.3, "last_alert": 0},
+    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 26", "target": 27998.4, "last_alert": 0},
 
     # ==========================================
     # --- ETH ENTRY SETUPS ---
     # ==========================================
-    {"coin": "ETH-USD", "label": "ETH SHORT ENTRY 1 (Local TVAH)",  "target": 2530.0,  "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH SHORT ENTRY 2 (Range High)",  "target": 2720.0,  "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH HTF SHORT ENTRY (Psych $3k)", "target": 2980.0,  "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH HTF SHORT ENTRY (Macro High)","target": 3380.0,  "type": "SHORT", "last_alert": 0},
-
-    {"coin": "ETH-USD", "label": "ETH LONG ENTRY 1 (TVAL Level)",   "target": 2506.0,  "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH LONG ENTRY 2 (Untested POC)", "target": 2435.0,  "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH LONG ENTRY 3 (Macro POC)",    "target": 2260.0,  "type": "LONG",  "last_alert": 0}
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 1",  "target": 3938.24, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 2",  "target": 3822.16, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 3",  "target": 3384.93, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 4",  "target": 3266.82, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 5",  "target": 3044.13, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 6",  "target": 2877.14, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 7",  "target": 2750.88, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 8",  "target": 2709.59, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 9",  "target": 2547.78, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 10", "target": 2506.76, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 11", "target": 2467.47, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 12", "target": 2445.53, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 13", "target": 2384.20, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 14", "target": 2247.03, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 15", "target": 1939.96, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 16", "target": 1867.86, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 17", "target": 1651.44, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 18", "target": 1563.58, "last_alert": 0},
+    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 19", "target": 1445.34, "last_alert": 0}
 ]
-
 previous_prices = {}
 
 # --- DISCORD NOTIFICATION LOGIC ---
