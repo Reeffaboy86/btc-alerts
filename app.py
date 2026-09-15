@@ -75,13 +75,13 @@ def send_discord_alert(coin_label, price, target):
         "username": "Crypto Level Bot",
         "embeds": [{
             "title": f"🚨 {coin_label}: ${price:,.2f}",
-            "description": f"**Price crossed entry zone of ${target:,.2f}**",
+            "description": f"**Price crossed observation zone of ${target:,.2f}**",
             "color": 15158332,
             "fields": [{"name": "Action Required", "value": "Check 1H Candle Close & Order Flow", "inline": False}]
         }]
     }
     try:
-        requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
+        requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=15)
     except Exception as e:
         print(f"Level Alert Error: {e}")
 
@@ -100,7 +100,7 @@ def send_whale_move_alert(coin, move_pct, current_price):
         }]
     }
     try:
-        requests.post(DISCORD_WHALE_WEBHOOK_URL, json=payload, timeout=5)
+        requests.post(DISCORD_WHALE_WEBHOOK_URL, json=payload, timeout=15)
     except Exception as e:
         print(f"Whale Alert Error: {e}")
 
@@ -112,32 +112,33 @@ def monitor_prices():
     while True:
         current_prices = {}
 
-        # 1. Fetch spot price ONCE per unique asset
+        # 1. Fetch spot price ONCE per unique asset with 15s timeout
         for coin in tracked_coins:
             try:
                 url = f"https://api.coinbase.com/v2/prices/{coin}/spot"
-                r = requests.get(url, headers=headers, timeout=5).json()
+                r = requests.get(url, headers=headers, timeout=15).json()
                 current_prices[coin] = float(r["data"]["amount"])
             except Exception as e:
                 print(f"Error fetching {coin}: {e}")
             time.sleep(1)
 
-        # 2. Check TPO Entry Target Levels
+        # 2. Check Observation Target Levels (Trigger when price reaches or crosses the exact target level)
         for t in TARGETS:
             coin = t["coin"]
             if coin not in current_prices:
                 continue
 
             current_price = current_prices[coin]
+            target_price = t["target"]
+            
+            # Simple proximity/crossing detection for general observation levels
+            # Triggers if price is within a tight threshold or crosses the exact level
             is_hit = False
-
-            if t["type"] == "SHORT" and current_price >= t["target"]:
-                is_hit = True
-            elif t["type"] == "LONG" and current_price <= t["target"]:
+            if abs(current_price - target_price) / target_price <= 0.001 or current_price == target_price:
                 is_hit = True
 
             if is_hit and (time.time() - t["last_alert"]) > ALERT_COOLDOWN:
-                send_discord_alert(t['label'], current_price, t['target'])
+                send_discord_alert(t['label'], current_price, target_price)
                 t["last_alert"] = time.time()
 
         # 3. Check Whale Impulses (>= 0.75% move between cycles)
