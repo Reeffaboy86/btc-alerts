@@ -1,6 +1,16 @@
-import os, time, threading, json, requests
-import websocket
+import os
+import time
+import threading
+import json
+import requests
 from flask import Flask
+
+# Safe package fallback for websocket-client
+try:
+    import websocket
+except ImportError:
+    os.system("pip install websocket-client")
+    import websocket
 
 app = Flask(__name__)
 
@@ -108,7 +118,7 @@ TARGETS = [
 previous_spot_prices = {}
 
 def get_asset_threshold(symbol):
-    """ Standardize pair string and lookup USD threshold. """
+    """ Normalize string symbol and extract threshold """
     clean_symbol = symbol.replace("-USD", "").replace("-USDT", "").replace("USDT", "").upper()
     return WHALE_THRESHOLDS.get(clean_symbol, 250000)
 
@@ -191,7 +201,10 @@ def start_binance_websocket():
         time.sleep(5)
         start_binance_websocket()
 
-    ws = websocket.WebSocketApp(url, on_open=on_open, on_message=on_message, on_close=on_close)
+    def on_error(ws, error):
+        pass
+
+    ws = websocket.WebSocketApp(url, on_open=on_open, on_message=on_message, on_close=on_close, on_error=on_error)
     ws.run_forever(ping_interval=20, ping_timeout=10)
 
 # --- WEBSOCKET: COINBASE ---
@@ -216,7 +229,7 @@ def start_coinbase_websocket():
         print("[WEBSOCKET] Connected to Coinbase Feed...", flush=True)
         ws.send(json.dumps({
             "type": "subscribe",
-            "product_ids": ["BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD", "BNB-USD", "ZEC-USD"],
+            "product_ids": ["BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD", "ZEC-USD"],
             "channels": ["matches"]
         }))
 
@@ -224,7 +237,10 @@ def start_coinbase_websocket():
         time.sleep(5)
         start_coinbase_websocket()
 
-    ws = websocket.WebSocketApp("wss://ws-feed.exchange.coinbase.com", on_open=on_open, on_message=on_message, on_close=on_close)
+    def on_error(ws, error):
+        pass
+
+    ws = websocket.WebSocketApp("wss://ws-feed.exchange.coinbase.com", on_open=on_open, on_message=on_message, on_close=on_close, on_error=on_error)
     ws.run_forever(ping_interval=20, ping_timeout=10)
 
 # --- WEBSOCKET: OKX ---
@@ -266,7 +282,10 @@ def start_okx_websocket():
         time.sleep(5)
         start_okx_websocket()
 
-    ws = websocket.WebSocketApp("wss://ws.okx.com:8443/ws/v5/public", on_open=on_open, on_message=on_message, on_close=on_close)
+    def on_error(ws, error):
+        pass
+
+    ws = websocket.WebSocketApp("wss://ws.okx.com:8443/ws/v5/public", on_open=on_open, on_message=on_message, on_close=on_close, on_error=on_error)
     ws.run_forever(ping_interval=20, ping_timeout=10)
 
 # --- MONITORING THREAD FOR LEVEL CROSSINGS ---
@@ -283,10 +302,11 @@ def monitor_prices():
             try:
                 url = f"https://api.coinbase.com/v2/prices/{coin}/spot"
                 r = requests.get(url, headers=headers, timeout=15).json()
-                current_prices[coin] = float(r["data"]["amount"])
+                if "data" in r and "amount" in r["data"]:
+                    current_prices[coin] = float(r["data"]["amount"])
             except Exception as e:
                 print(f"[ERROR] Fetching {coin}: {e}", flush=True)
-            time.sleep(1)
+            time.sleep(0.5)
 
         for t in TARGETS:
             coin = t["coin"]
@@ -318,7 +338,7 @@ def monitor_prices():
 
         time.sleep(10)
 
-# Start background threads
+# Start background daemon threads safely
 threading.Thread(target=monitor_prices, daemon=True).start()
 threading.Thread(target=start_binance_websocket, daemon=True).start()
 threading.Thread(target=start_coinbase_websocket, daemon=True).start()
@@ -333,4 +353,5 @@ def health():
     return "OK", 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
