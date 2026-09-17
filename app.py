@@ -15,10 +15,14 @@ except ImportError:
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
+# PASTE YOUR RAW GIST LINK HERE:
+GIST_URL = "https://gist.githubusercontent.com/Reeffaboy86/e5c499b4197b34a4903f454ec0f34fa4/raw/9ad34af78fce60d822ef29d8c98f9dd3613b0493/targets.json"
+
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1549075247108456458/K6p2w-tPBxR_Cdpdn9kqKfA_3KAM4HxX_sr2I2EgAPv5bxW-pXgJzSQWm57WTEPcIxM8"
 DISCORD_WHALE_WEBHOOK_URL = "https://discord.com/api/webhooks/1549076176662831246/U24bHAk-GSWqy0aX5sBq3RV_GFhTeLql2Kb4JUx-tv--gU1s4UMn8IcKq9T3GsGB47Tv"
 
 ALERT_COOLDOWN = 900  # 15-minute cooldown per target level
+LEVEL_COOLDOWNS = {}  # Dynamic tracking for level alert timestamps
 
 # Dynamic USD Thresholds per Asset optimized for Intraday Trading
 WHALE_THRESHOLDS = {
@@ -40,82 +44,17 @@ OKX_CONTRACT_SIZES = {
     "ZEC-USDT": 0.1
 }
 
-# Target Configuration (BTC, ETH, and BNB Entry Levels)
-TARGETS = [
-    # --- BTC ENTRY SETUPS ---
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 1",  "target": 96207.8, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 2",  "target": 94854.2, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 3",  "target": 89699.1, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 4",  "target": 87281.7, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 5",  "target": 80685.1, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 6 (1H Resistance)", "target": 79951.0, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 7",  "target": 79343.9, "type": "SHORT", "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 8",  "target": 76185.3, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 9",  "target": 75521.6, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 10", "target": 74513.8, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 11", "target": 72816.5, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 12", "target": 71477.6, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 13", "target": 69799.8, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 14", "target": 68096.3, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 15", "target": 65084.5, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 16", "target": 63381.1, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 17", "target": 60620.1, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 18", "target": 59753.9, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 19", "target": 48466.9, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 20", "target": 46987.3, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 21", "target": 43512.0, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 22", "target": 42577.1, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 23", "target": 30135.7, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 24", "target": 29415.0, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 25", "target": 28868.3, "type": "LONG",  "last_alert": 0},
-    {"coin": "BTC-USD", "label": "BTC OBSERVE FOR ENTRY 26", "target": 27998.4, "type": "LONG",  "last_alert": 0},
-
-    # --- ETH ENTRY SETUPS ---
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 1",  "target": 3938.24, "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 2",  "target": 3822.16, "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 3",  "target": 3384.93, "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 4",  "target": 3266.82, "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 5",  "target": 3044.13, "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 6",  "target": 2877.14, "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 7",  "target": 2750.88, "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 8",  "target": 2709.59, "type": "SHORT", "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 9",  "target": 2547.78, "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 10", "target": 2506.76, "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 11", "target": 2467.47, "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 12", "target": 2445.53, "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 13", "target": 2384.20, "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 14", "target": 2247.03, "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 15", "target": 1939.96, "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 16", "target": 1867.86, "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 17", "target": 1651.44, "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 18", "target": 1563.58, "type": "LONG",  "last_alert": 0},
-    {"coin": "ETH-USD", "label": "ETH OBSERVE FOR ENTRY 19", "target": 1445.34, "type": "LONG",  "last_alert": 0},
-
-    # --- BNB ENTRY SETUPS ---
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 1",  "target": 931.66, "type": "SHORT", "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 2",  "target": 906.68, "type": "SHORT", "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 3",  "target": 856.00, "type": "SHORT", "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 4",  "target": 832.84, "type": "SHORT", "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 5",  "target": 785.07, "type": "SHORT", "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 6",  "target": 760.15, "type": "SHORT", "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 7",  "target": 742.42, "type": "SHORT", "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 8",  "target": 729.78, "type": "SHORT", "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 9",  "target": 708.88, "type": "SHORT", "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 10", "target": 682.73, "type": "SHORT", "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 11", "target": 647.39, "type": "LONG",  "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 12", "target": 637.57, "type": "LONG",  "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 13", "target": 620.69, "type": "LONG",  "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 14", "target": 598.79, "type": "LONG",  "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 15", "target": 557.47, "type": "LONG",  "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 16", "target": 526.00, "type": "LONG",  "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 17", "target": 513.53, "type": "LONG",  "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 18", "target": 501.00, "type": "LONG",  "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 19", "target": 366.51, "type": "LONG",  "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 20", "target": 336.00, "type": "LONG",  "last_alert": 0},
-    {"coin": "BNB-USD", "label": "BNB OBSERVE FOR ENTRY 21", "target": 287.45, "type": "LONG",  "last_alert": 0}
-]
-
 previous_spot_prices = {}
+
+def get_latest_targets():
+    """ Fetch target configuration live from GitHub Gist """
+    try:
+        r = requests.get(GIST_URL, timeout=5)
+        if r.status_code == 200:
+            return r.json()
+    except Exception as e:
+        print(f"[ERROR] Failed reading Gist targets: {e}", flush=True)
+    return []
 
 def get_asset_threshold(symbol):
     """ Normalize string symbol and extract threshold """
@@ -291,11 +230,12 @@ def start_okx_websocket():
 # --- MONITORING THREAD FOR LEVEL CROSSINGS ---
 def monitor_prices():
     headers = {"User-Agent": "Mozilla/5.0"}
-    tracked_coins = list(set([t["coin"] for t in TARGETS]))
-
     print("[SYSTEM] Starting level crossing monitor thread...", flush=True)
 
     while True:
+        targets = get_latest_targets()
+        tracked_coins = list(set([t["coin"] for t in targets])) if targets else ["BTC-USD", "ETH-USD", "BNB-USD"]
+
         current_prices = {}
 
         for coin in tracked_coins:
@@ -308,14 +248,15 @@ def monitor_prices():
                 print(f"[ERROR] Fetching {coin}: {e}", flush=True)
             time.sleep(0.5)
 
-        for t in TARGETS:
+        for t in targets:
             coin = t["coin"]
             if coin not in current_prices:
                 continue
 
             current_price = current_prices[coin]
             prev_price = previous_spot_prices.get(coin)
-            target_price = t["target"]
+            target_price = float(t["target"])
+            label = t["label"]
             is_hit = False
 
             if prev_price is not None:
@@ -324,9 +265,10 @@ def monitor_prices():
                 elif t["type"] == "LONG" and prev_price > target_price >= current_price:
                     is_hit = True
 
-            if is_hit and (time.time() - t["last_alert"]) > ALERT_COOLDOWN:
-                send_discord_alert(t['label'], current_price, target_price)
-                t["last_alert"] = time.time()
+            last_alert_time = LEVEL_COOLDOWNS.get(label, 0)
+            if is_hit and (time.time() - last_alert_time) > ALERT_COOLDOWN:
+                send_discord_alert(label, current_price, target_price)
+                LEVEL_COOLDOWNS[label] = time.time()
 
         for coin, price in current_prices.items():
             previous_spot_prices[coin] = price
