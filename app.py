@@ -15,7 +15,6 @@ except ImportError:
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
-# PASTE YOUR RAW GIST LINK HERE:
 GIST_URL = "https://gist.githubusercontent.com/Reeffaboy86/e5c499b4197b34a4903f454ec0f34fa4/raw/9ad34af78fce60d822ef29d8c98f9dd3613b0493/targets.json"
 
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1549075247108456458/K6p2w-tPBxR_Cdpdn9kqKfA_3KAM4HxX_sr2I2EgAPv5bxW-pXgJzSQWm57WTEPcIxM8"
@@ -30,8 +29,7 @@ WHALE_THRESHOLDS = {
     "ETH": 350000,
     "SOL": 350000,
     "XRP": 300000,
-    "BNB": 300000,
-    "ZEC": 50000
+    "BNB": 300000
 }
 
 # OKX contract multiplier lookup table for accurate USD size calculation
@@ -40,11 +38,16 @@ OKX_CONTRACT_SIZES = {
     "ETH-USDT": 1.0,
     "SOL-USDT": 1.0,
     "XRP-USDT": 1.0,
-    "BNB-USDT": 0.01,
-    "ZEC-USDT": 0.1
+    "BNB-USDT": 0.01
 }
 
 previous_spot_prices = {}
+
+# --- ORDER FLOW (CVD & OI) GLOBAL STATE ---
+binance_spot_cvd = {"BTC": 0.0, "ETH": 0.0, "BNB": 0.0, "SOL": 0.0, "XRP": 0.0}
+binance_futures_cvd = {"BTC": 0.0, "ETH": 0.0, "BNB": 0.0, "SOL": 0.0, "XRP": 0.0}
+last_open_interest = {"BTC": 0.0, "ETH": 0.0, "BNB": 0.0, "SOL": 0.0, "XRP": 0.0}
+orderflow_cooldowns = {}
 
 def get_latest_targets():
     """ Fetch target configuration live from GitHub Gist """
@@ -108,15 +111,37 @@ def send_large_trade_alert(exchange, coin, side, usd_val, price, size):
     except Exception as e:
         print(f"[ERROR] Whale Alert Error: {e}", flush=True)
 
-# --- WEBSOCKET: BINANCE ---
+def send_orderflow_alert(title, description, symbol, futures_cvd_val, spot_cvd_val, oi_val):
+    payload = {
+        "username": "Order Flow & OI Monitor",
+        "embeds": [{
+            "title": title,
+            "description": description,
+            "color": 15844367,
+            "fields": [
+                {"name": "Futures CVD Delta", "value": f"{futures_cvd_val:+,.2f} {symbol}", "inline": True},
+                {"name": "Spot CVD Delta", "value": f"{spot_cvd_val:+,.2f} {symbol}", "inline": True},
+                {"name": "Open Interest (USD)", "value": f"${oi_val:,.0f}" if oi_val else "N/A", "inline": True}
+            ],
+            "footer": {"text": "Binance Futures & Spot Order Flow Divergence Engine"}
+        }]
+    }
+    try:
+        requests.post(DISCORD_WHALE_WEBHOOK_URL, json=payload, timeout=10)
+        print(f"[ORDERFLOW ALERT SENT] {title}", flush=True)
+    except Exception as e:
+        print(f"[ERROR] Order Flow Alert Error: {e}", flush=True)
+
+# --- WEBSOCKET: BINANCE SPOT ---
 def start_binance_websocket():
     streams = [
         "btcusdt@aggTrade", "ethusdt@aggTrade", "solusdt@aggTrade",
-        "xrpusdt@aggTrade", "bnbusdt@aggTrade", "zecusdt@aggTrade"
+        "xrpusdt@aggTrade", "bnbusdt@aggTrade"
     ]
     url = f"wss://stream.binance.com:9443/stream?streams={'/'.join(streams)}"
 
     def on_message(ws, message):
+        global binance_spot_cvd
         try:
             raw = json.loads(message)
             if "data" in raw:
@@ -127,18 +152,62 @@ def start_binance_websocket():
                 coin = data["s"]
                 side = "sell" if data["m"] else "buy"
 
+                # Calculate Spot CVD
+                clean_symbol = coin.replace("USDT", "").upper()
+                if clean_symbol in binance_spot_cvd:
+                    delta = -size if side == "sell" else size
+                    binance_spot_cvd[clean_symbol] += delta
+
                 threshold = get_asset_threshold(coin)
                 if usd_val >= threshold:
-                    send_large_trade_alert("Binance", coin, side, usd_val, price, size)
+                    send_large_trade_alert("Binance Spot", coin, side, usd_val, price, size)
         except Exception:
             pass
 
     def on_open(ws):
-        print("[WEBSOCKET] Connected to Binance Feed...", flush=True)
+        print("[WEBSOCKET] Connected to Binance Spot Feed...", flush=True)
 
     def on_close(ws, close_status, close_msg):
         time.sleep(5)
         start_binance_websocket()
+
+    def on_error(ws, error):
+        pass
+
+    ws = websocket.WebSocketApp(url, on_open=on_open, on_message=on_message, on_close=on_close, on_error=on_error)
+    ws.run_forever(ping_interval=20, ping_timeout=10)
+
+# --- WEBSOCKET: BINANCE FUTURES (FOR CVD & LEVERAGE TRACKING) ---
+def start_binance_futures_websocket():
+    streams = [
+        "btcusdt@aggTrade", "ethusdt@aggTrade", "bnbusdt@aggTrade",
+        "solusdt@aggTrade", "xrpusdt@aggTrade"
+    ]
+    url = f"wss://fstream.binance.com/stream?streams={'/'.join(streams)}"
+
+    def on_message(ws, message):
+        global binance_futures_cvd
+        try:
+            raw = json.loads(message)
+            if "data" in raw:
+                data = raw["data"]
+                size = float(data["q"])
+                coin = data["s"]
+                side = "sell" if data["m"] else "buy"
+
+                clean_symbol = coin.replace("USDT", "").upper()
+                if clean_symbol in binance_futures_cvd:
+                    delta = -size if side == "sell" else size
+                    binance_futures_cvd[clean_symbol] += delta
+        except Exception:
+            pass
+
+    def on_open(ws):
+        print("[WEBSOCKET] Connected to Binance Futures Feed...", flush=True)
+
+    def on_close(ws, close_status, close_msg):
+        time.sleep(5)
+        start_binance_futures_websocket()
 
     def on_error(ws, error):
         pass
@@ -168,7 +237,7 @@ def start_coinbase_websocket():
         print("[WEBSOCKET] Connected to Coinbase Feed...", flush=True)
         ws.send(json.dumps({
             "type": "subscribe",
-            "product_ids": ["BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD", "ZEC-USD"],
+            "product_ids": ["BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD"],
             "channels": ["matches"]
         }))
 
@@ -212,8 +281,7 @@ def start_okx_websocket():
                 {"channel": "trades", "instId": "ETH-USDT"},
                 {"channel": "trades", "instId": "SOL-USDT"},
                 {"channel": "trades", "instId": "XRP-USDT"},
-                {"channel": "trades", "instId": "BNB-USDT"},
-                {"channel": "trades", "instId": "ZEC-USDT"}
+                {"channel": "trades", "instId": "BNB-USDT"}
             ]
         }))
 
@@ -227,6 +295,85 @@ def start_okx_websocket():
     ws = websocket.WebSocketApp("wss://ws.okx.com:8443/ws/v5/public", on_open=on_open, on_message=on_message, on_close=on_close, on_error=on_error)
     ws.run_forever(ping_interval=20, ping_timeout=10)
 
+# --- MONITORING THREAD FOR OPEN INTEREST & DIVERGENCE ---
+def monitor_orderflow():
+    """ Periodically fetches Open Interest & checks Spot vs Futures CVD Divergence """
+    print("[SYSTEM] Starting CVD & Open Interest Monitor thread...", flush=True)
+    
+    baseline_spot = dict(binance_spot_cvd)
+    baseline_fut = dict(binance_futures_cvd)
+
+    # Asset-specific CVD divergence thresholds (Futures buys / Spot dumps)
+    cvd_thresholds = {
+        "BTC": {"fut": 300, "spot": -100},
+        "ETH": {"fut": 1500, "spot": -500},
+        "BNB": {"fut": 500, "spot": -200},
+        "SOL": {"fut": 3000, "spot": -1000},
+        "XRP": {"fut": 250000, "spot": -100000}
+    }
+
+    while True:
+        try:
+            for symbol in ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT"]:
+                asset = symbol.replace("USDT", "").upper()
+                
+                # 1. Fetch Binance Futures Open Interest
+                oi_url = f"https://fapi.binance.com/fapi/v1/openInterest?symbol={symbol}"
+                res = requests.get(oi_url, timeout=5).json()
+                
+                if "openInterest" in res:
+                    oi_contracts = float(res["openInterest"])
+                    price = previous_spot_prices.get(f"{asset}-USD", 1.0)
+                    oi_usd = oi_contracts * price
+                    
+                    prev_oi = last_open_interest.get(asset, 0.0)
+                    if prev_oi > 0:
+                        oi_change_pct = ((oi_usd - prev_oi) / prev_oi) * 100
+                        
+                        # Alert if OI surges by more than 2.0% in a 3-minute cycle
+                        if oi_change_pct >= 2.0:
+                            now = time.time()
+                            if now - orderflow_cooldowns.get(f"OI_{asset}", 0) > 600:
+                                send_orderflow_alert(
+                                    title=f"🚨 LARGE {asset} OPEN INTEREST SURGE: +{oi_change_pct:.2f}%",
+                                    description=f"Significant influx of speculative leverage on Binance Futures! Current OI: **${oi_usd:,.0f}**",
+                                    symbol=asset,
+                                    futures_cvd_val=binance_futures_cvd[asset] - baseline_fut[asset],
+                                    spot_cvd_val=binance_spot_cvd[asset] - baseline_spot[asset],
+                                    oi_val=oi_usd
+                                )
+                                orderflow_cooldowns[f"OI_{asset}"] = now
+                    
+                    last_open_interest[asset] = oi_usd
+
+                # 2. Check CVD Divergence over the 3-minute window
+                spot_delta = binance_spot_cvd[asset] - baseline_spot[asset]
+                fut_delta = binance_futures_cvd[asset] - baseline_fut[asset]
+
+                thresh = cvd_thresholds.get(asset, {"fut": 1000, "spot": -300})
+
+                if fut_delta > thresh["fut"] and spot_delta < thresh["spot"]:
+                    now = time.time()
+                    if now - orderflow_cooldowns.get(f"CVD_BEAR_{asset}", 0) > 900:
+                        send_orderflow_alert(
+                            title=f"🔴 BEARISH CVD DIVERGENCE DETECTED ({asset})",
+                            description="**Fake Push Warning:** Futures buyers are driving price up, but Spot market is selling into the strength.",
+                            symbol=asset,
+                            futures_cvd_val=fut_delta,
+                            spot_cvd_val=spot_delta,
+                            oi_val=last_open_interest.get(asset, 0)
+                        )
+                        orderflow_cooldowns[f"CVD_BEAR_{asset}"] = now
+
+            # Reset baselines every cycle
+            baseline_spot = dict(binance_spot_cvd)
+            baseline_fut = dict(binance_futures_cvd)
+
+        except Exception as e:
+            print(f"[ERROR] Order Flow Loop Error: {e}", flush=True)
+
+        time.sleep(180)  # Check every 3 minutes
+
 # --- MONITORING THREAD FOR LEVEL CROSSINGS ---
 def monitor_prices():
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -234,7 +381,7 @@ def monitor_prices():
 
     while True:
         targets = get_latest_targets()
-        tracked_coins = list(set([t["coin"] for t in targets])) if targets else ["BTC-USD", "ETH-USD", "BNB-USD"]
+        tracked_coins = list(set([t["coin"] for t in targets])) if targets else ["BTC-USD", "ETH-USD", "BNB-USD", "SOL-USD", "XRP-USD"]
 
         current_prices = {}
 
@@ -276,19 +423,23 @@ def monitor_prices():
         btc_p = current_prices.get("BTC-USD", 0)
         eth_p = current_prices.get("ETH-USD", 0)
         bnb_p = current_prices.get("BNB-USD", 0)
-        print(f"--- Loop Tick: BTC ${btc_p:,.2f} | ETH ${eth_p:,.2f} | BNB ${bnb_p:,.2f} ---", flush=True)
+        sol_p = current_prices.get("SOL-USD", 0)
+        xrp_p = current_prices.get("XRP-USD", 0)
+        print(f"--- Loop Tick: BTC ${btc_p:,.2f} | ETH ${eth_p:,.2f} | BNB ${bnb_p:,.2f} | SOL ${sol_p:,.2f} | XRP ${xrp_p:,.2f} ---", flush=True)
 
         time.sleep(10)
 
 # Start background daemon threads safely
 threading.Thread(target=monitor_prices, daemon=True).start()
 threading.Thread(target=start_binance_websocket, daemon=True).start()
+threading.Thread(target=start_binance_futures_websocket, daemon=True).start()
 threading.Thread(target=start_coinbase_websocket, daemon=True).start()
 threading.Thread(target=start_okx_websocket, daemon=True).start()
+threading.Thread(target=monitor_orderflow, daemon=True).start()
 
 @app.route('/')
 def home():
-    return "Multi-Asset Whale & Level Tracker Active!", 200
+    return "Multi-Asset Whale, Level & Orderflow Tracker Active!", 200
 
 @app.route('/health')
 def health():
