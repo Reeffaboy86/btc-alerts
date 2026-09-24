@@ -15,7 +15,7 @@ except ImportError:
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
-GIST_URL = "https://gist.githubusercontent.com/Reeffaboy86/e5c499b4197b34a4903f454ec0f34fa4/raw/9ad34af78fce60d822ef29d8c98f9dd3613b0493/targets.json"
+GIST_URL = "https://gist.githubusercontent.com/Reeffaboy86/e5c499b4197b34a4903f454ec0f34fa4/raw/b6b83e6e7a9214d8828724d41552a9f542fd2136/targets.json"
 
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1549075247108456458/K6p2w-tPBxR_Cdpdn9kqKfA_3KAM4HxX_sr2I2EgAPv5bxW-pXgJzSQWm57WTEPcIxM8"
 DISCORD_WHALE_WEBHOOK_URL = "https://discord.com/api/webhooks/1549076176662831246/U24bHAk-GSWqy0aX5sBq3RV_GFhTeLql2Kb4JUx-tv--gU1s4UMn8IcKq9T3GsGB47Tv"
