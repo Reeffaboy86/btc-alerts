@@ -379,9 +379,15 @@ def monitor_prices():
     headers = {"User-Agent": "Mozilla/5.0"}
     print("[SYSTEM] Starting level crossing monitor thread...", flush=True)
 
+    # Base assets that should ALWAYS be tracked and printed
+    default_assets = ["BTC-USD", "ETH-USD", "BNB-USD", "SOL-USD", "XRP-USD"]
+
     while True:
         targets = get_latest_targets()
-        tracked_coins = list(set([t["coin"] for t in targets])) if targets else ["BTC-USD", "ETH-USD", "BNB-USD", "SOL-USD", "XRP-USD"]
+        
+        # Merge targets from Gist with default_assets so SOL and XRP are never skipped
+        gist_coins = [t["coin"] for t in targets] if targets else []
+        tracked_coins = list(set(gist_coins + default_assets))
 
         current_prices = {}
 
@@ -393,8 +399,9 @@ def monitor_prices():
                     current_prices[coin] = float(r["data"]["amount"])
             except Exception as e:
                 print(f"[ERROR] Fetching {coin}: {e}", flush=True)
-            time.sleep(0.5)
+            time.sleep(0.3)
 
+        # Check target crossing triggers
         for t in targets:
             coin = t["coin"]
             if coin not in current_prices:
@@ -417,15 +424,18 @@ def monitor_prices():
                 send_discord_alert(label, current_price, target_price)
                 LEVEL_COOLDOWNS[label] = time.time()
 
+        # Update previous prices state
         for coin, price in current_prices.items():
             previous_spot_prices[coin] = price
 
+        # Extract prices for print output
         btc_p = current_prices.get("BTC-USD", 0)
         eth_p = current_prices.get("ETH-USD", 0)
         bnb_p = current_prices.get("BNB-USD", 0)
         sol_p = current_prices.get("SOL-USD", 0)
         xrp_p = current_prices.get("XRP-USD", 0)
-        print(f"--- Loop Tick: BTC ${btc_p:,.2f} | ETH ${eth_p:,.2f} | BNB ${bnb_p:,.2f} | SOL ${sol_p:,.2f} | XRP ${xrp_p:,.2f} ---", flush=True)
+
+        print(f"--- Loop Tick: BTC ${btc_p:,.2f} | ETH ${eth_p:,.2f} | BNB ${bnb_p:,.2f} | SOL ${sol_p:,.2f} | XRP ${xrp_p:,.4f} ---", flush=True)
 
         time.sleep(10)
 
