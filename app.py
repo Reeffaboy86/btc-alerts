@@ -29,7 +29,8 @@ WHALE_THRESHOLDS = {
     "ETH": 350000,
     "SOL": 350000,
     "XRP": 300000,
-    "BNB": 300000
+    "BNB": 300000,
+    "PAXG": 250000
 }
 
 # OKX contract multiplier lookup table for accurate USD size calculation
@@ -38,15 +39,16 @@ OKX_CONTRACT_SIZES = {
     "ETH-USDT": 1.0,
     "SOL-USDT": 1.0,
     "XRP-USDT": 1.0,
-    "BNB-USDT": 0.01
+    "BNB-USDT": 0.01,
+    "PAXG-USDT": 1.0
 }
 
 previous_spot_prices = {}
 
 # --- ORDER FLOW (CVD & OI) GLOBAL STATE ---
-binance_spot_cvd = {"BTC": 0.0, "ETH": 0.0, "BNB": 0.0, "SOL": 0.0, "XRP": 0.0}
-binance_futures_cvd = {"BTC": 0.0, "ETH": 0.0, "BNB": 0.0, "SOL": 0.0, "XRP": 0.0}
-last_open_interest = {"BTC": 0.0, "ETH": 0.0, "BNB": 0.0, "SOL": 0.0, "XRP": 0.0}
+binance_spot_cvd = {"BTC": 0.0, "ETH": 0.0, "BNB": 0.0, "SOL": 0.0, "XRP": 0.0, "PAXG": 0.0}
+binance_futures_cvd = {"BTC": 0.0, "ETH": 0.0, "BNB": 0.0, "SOL": 0.0, "XRP": 0.0, "PAXG": 0.0}
+last_open_interest = {"BTC": 0.0, "ETH": 0.0, "BNB": 0.0, "SOL": 0.0, "XRP": 0.0, "PAXG": 0.0}
 orderflow_cooldowns = {}
 
 def get_latest_targets():
@@ -136,7 +138,7 @@ def send_orderflow_alert(title, description, symbol, futures_cvd_val, spot_cvd_v
 def start_binance_websocket():
     streams = [
         "btcusdt@aggTrade", "ethusdt@aggTrade", "solusdt@aggTrade",
-        "xrpusdt@aggTrade", "bnbusdt@aggTrade"
+        "xrpusdt@aggTrade", "bnbusdt@aggTrade", "paxgusdt@aggTrade"
     ]
     url = f"wss://stream.binance.com:9443/stream?streams={'/'.join(streams)}"
 
@@ -181,7 +183,7 @@ def start_binance_websocket():
 def start_binance_futures_websocket():
     streams = [
         "btcusdt@aggTrade", "ethusdt@aggTrade", "bnbusdt@aggTrade",
-        "solusdt@aggTrade", "xrpusdt@aggTrade"
+        "solusdt@aggTrade", "xrpusdt@aggTrade", "paxgusdt@aggTrade"
     ]
     url = f"wss://fstream.binance.com/stream?streams={'/'.join(streams)}"
 
@@ -237,7 +239,7 @@ def start_coinbase_websocket():
         print("[WEBSOCKET] Connected to Coinbase Feed...", flush=True)
         ws.send(json.dumps({
             "type": "subscribe",
-            "product_ids": ["BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD"],
+            "product_ids": ["BTC-USD", "ETH-USD", "SOL-USD", "XRP-USD", "PAXG-USD"],
             "channels": ["matches"]
         }))
 
@@ -281,7 +283,8 @@ def start_okx_websocket():
                 {"channel": "trades", "instId": "ETH-USDT"},
                 {"channel": "trades", "instId": "SOL-USDT"},
                 {"channel": "trades", "instId": "XRP-USDT"},
-                {"channel": "trades", "instId": "BNB-USDT"}
+                {"channel": "trades", "instId": "BNB-USDT"},
+                {"channel": "trades", "instId": "PAXG-USDT"}
             ]
         }))
 
@@ -309,12 +312,13 @@ def monitor_orderflow():
         "ETH": {"fut": 1500, "spot": -500},
         "BNB": {"fut": 500, "spot": -200},
         "SOL": {"fut": 3000, "spot": -1000},
-        "XRP": {"fut": 250000, "spot": -100000}
+        "XRP": {"fut": 250000, "spot": -100000},
+        "PAXG": {"fut": 100, "spot": -30}
     }
 
     while True:
         try:
-            for symbol in ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT"]:
+            for symbol in ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "PAXGUSDT"]:
                 asset = symbol.replace("USDT", "").upper()
                 
                 # 1. Fetch Binance Futures Open Interest
@@ -380,12 +384,12 @@ def monitor_prices():
     print("[SYSTEM] Starting level crossing monitor thread...", flush=True)
 
     # Base assets that should ALWAYS be tracked and printed
-    default_assets = ["BTC-USD", "ETH-USD", "BNB-USD", "SOL-USD", "XRP-USD"]
+    default_assets = ["BTC-USD", "ETH-USD", "BNB-USD", "SOL-USD", "XRP-USD", "PAXG-USD"]
 
     while True:
         targets = get_latest_targets()
         
-        # Merge targets from Gist with default_assets so SOL and XRP are never skipped
+        # Merge targets from Gist with default_assets so SOL, XRP, and PAXG are never skipped
         gist_coins = [t["coin"] for t in targets] if targets else []
         tracked_coins = list(set(gist_coins + default_assets))
 
@@ -434,8 +438,9 @@ def monitor_prices():
         bnb_p = current_prices.get("BNB-USD", 0)
         sol_p = current_prices.get("SOL-USD", 0)
         xrp_p = current_prices.get("XRP-USD", 0)
+        paxg_p = current_prices.get("PAXG-USD", 0)
 
-        print(f"--- Loop Tick: BTC ${btc_p:,.2f} | ETH ${eth_p:,.2f} | BNB ${bnb_p:,.2f} | SOL ${sol_p:,.2f} | XRP ${xrp_p:,.4f} ---", flush=True)
+        print(f"--- Loop Tick: BTC ${btc_p:,.2f} | ETH ${eth_p:,.2f} | BNB ${bnb_p:,.2f} | SOL ${sol_p:,.2f} | XRP ${xrp_p:,.4f} | PAXG ${paxg_p:,.2f} ---", flush=True)
 
         time.sleep(10)
 
